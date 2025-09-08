@@ -1,0 +1,13 @@
+# PlatformIO build output
+.pio/
+.piolibdeps/
+
+# VS Code workspace files (optional)
+.vscode/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Do not distribute vendored third-party SAM code
+lib/arduino-SAM/
