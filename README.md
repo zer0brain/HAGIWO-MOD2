@@ -10,6 +10,7 @@ Contents
 - Quick start
 - Features & hardware
 - Hardware I/O map 
+- Eurorack integration (quick notes)
 - Module index (with env names and paths)
 	- See also `MODULES.md` for a detailed index and how to add new modules
 - Build & upload
@@ -37,16 +38,38 @@ Features & hardware
 Hardware I/O map (neutral)
 - POT1: A0 — analog input (0..1023). Meaning is defined by the module.
 - POT2: A1 — analog input (0..1023). Meaning is defined by the module.
-- POT3: A2 — analog input (0..1023). Meaning is defined by the module.
-- IN1:  GPIO7 — digital input. Edge/level semantics are module‑defined.
-- IN2:  GPIO0 — digital input. Auxiliary use is module‑defined.
+- POT3: A2 — analog input (0..1023). In MOD2 this is shared with the CV jack (see below).
+- IN1:  GPIO7 — digital input (Gate/Trigger only; CV not supported on IN1/IN2).
+- IN2:  GPIO0 — digital input (Gate/Trigger only; CV not supported on IN1/IN2).
 - OUT:  GPIO1 — PWM audio output (10‑bit; 0..1023). Mid ≈ 511/512 when idle.
 - LED:  GPIO5 — digital output. Purpose is module‑defined.
 - BUTTON: GPIO6 — digital input (use pull‑up). Purpose is module‑defined.
 
 Analog‑shared CV on A2 (POT3)
-- Many panels tie the CV jack to POT3 (A2) via a passive mix, so firmware reads a single combined analog value (pot + external CV). Software cannot separate these sources without extra hardware.
-- You may invert the reading for ergonomics (e.g., `value = 1023 - analogRead(A2)`), but this is optional—document your choice in the module header.
+- In MOD2, the CV jack is passively mixed with POT3 and read on A2. Firmware receives a single combined value (pot + CV); this is by design.
+- Expected CV range: 0–5 V. Due to the front‑end op‑amp, the CV is inverted (CV=5 V or POT3=max → ADC≈0 V; CV=0 V or POT3=min → ADC≈3.3 V).
+- IN1/IN2 are gate/trigger inputs only and do not accept continuous CV.
+
+Module specs (per HAGIWO)
+-------------------------
+- Power rails on bus: +12 V, −12 V, +5 V. MOD2 uses the +5 V rail for XIAO and logic.
+- Panel size/depth: 4 HP, ~28 mm depth.
+- Controls: 3 × potentiometers (100 k linear), 1 × push switch, 1 × LED (brightness via PWM).
+- Inputs: 2 × Gate In (IN1/IN2), 1 × CV In shared with POT3 (A2, 0–5 V, inverted at the ADC).
+- Output: 1 × audio out, PWM‑derived, AC‑coupled ≈ 10 Vpp.
+- Output LPF: rear jumper selects cutoff (toward MCU = higher cutoff e.g. hi‑hat; toward power header = lower cutoff e.g. kick).
+- Input protection/tolerance: series resistor + Schottky clamp; validated by the author for +12 V/−12 V DC (1 min) and ±10 V audio‑rate AC (1 min) without damage.
+- RP2350 erratum: use pulldown ≤ 8.2 kΩ (reference uses 3.3 k + 4.7 k ≈ 8 k) where applicable.
+- Cost notes: 16‑pin power ribbon/socket to reduce cable cost; many parts common with MOD1.
+
+Eurorack integration (quick notes)
+----------------------------------
+- Power rails: +12 V, −12 V, +5 V are present on the bus. MOD2 uses the +5 V rail for the XIAO and logic as per the official schematic.
+- IN1/IN2 gates: Digital only. The input stage uses Schottky clamping and a series resistor and has been validated to tolerate ±12 V DC and ±10 V audio‑rate AC for 1 minute without damage (per author’s test).
+- RP2350 note: Use a pulldown ≤8.2 kΩ on the button/inputs (erratum E9); the reference design combines 3.3 kΩ + 4.7 kΩ ≈ 8 kΩ.
+- CV input: On POT3 (A2), 0–5 V and inverted as noted above.
+- Audio OUT: PWM with RC low‑pass; output level is AC‑coupled ~10 Vpp. The LPF cutoff is selectable via a rear jumper (toward MCU = higher cutoff for hi‑hats; toward power header = lower cutoff for kicks).
+- USB note: Disconnect the Eurorack power ribbon when connecting the XIAO to a PC over USB to avoid tying rails together.
 
 Module index
 ------------
@@ -73,6 +96,13 @@ Troubleshooting
 - UF2 not generated: Install `picotool` or just use the `.bin` with your uploader. PlatformIO still finishes successfully.
 - Library fetch: For speech (SAM), the library is pulled via `lib_deps` from GitHub. If you need reproducibility, pin a commit using `#<commit-sha>`.
 - WSL/paths: On Windows with WSL, use paths like `/mnt/d/...` when running PlatformIO from a Linux shell.
+
+Links
+-----
+- Official article: https://note.com/solder_state/n/nce8f7defcf98
+- ModularGrid: https://modulargrid.net/e/other-unknown-hagiwo-mod2
+- Production files/BOM (Patreon): https://www.patreon.com/posts/mod2-rp2350-drum-129202662
+- XIAO RP2350 Arduino wiki: https://wiki.seeedstudio.com/xiao_rp2350_arduino/
 
 Third‑party components
 - SAM – Software Automatic Mouth (arduino‑SAM) by Phil Schatzmann
